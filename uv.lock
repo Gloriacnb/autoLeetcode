@@ -86,16 +86,20 @@ ollama = [
 openai = [
     { name = "openai" },
 ]
+zhipu = [
+    { name = "openai" },
+]
 
 [package.metadata]
 requires-dist = [
     { name = "anthropic", marker = "extra == 'anthropic'", specifier = ">=0.18.0" },
-    { name = "autoleetcode", extras = ["openai", "anthropic", "ollama"], marker = "extra == 'all'" },
+    { name = "autoleetcode", extras = ["openai", "anthropic", "ollama", "zhipu"], marker = "extra == 'all'" },
     { name = "black", marker = "extra == 'dev'", specifier = ">=23.0.0" },
     { name = "google-generativeai" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.0.0" },
     { name = "ollama", marker = "extra == 'ollama'", specifier = ">=0.1.0" },
     { name = "openai", marker = "extra == 'openai'", specifier = ">=1.0.0" },
+    { name = "openai", marker = "extra == 'zhipu'", specifier = ">=1.0.0" },
     { name = "pillow" },
     { name = "pillow-heif" },
     { name = "pyperclip" },
@@ -103,7 +107,7 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.0.0" },
     { name = "watchdog" },
 ]
-provides-extras = ["openai", "anthropic", "ollama", "all", "dev"]
+provides-extras = ["openai", "anthropic", "ollama", "zhipu", "all", "dev"]
 
 [[package]]
 name = "black"

@@ -76,6 +76,7 @@ MODEL_NAME = gemini-2.5-flash
 | `openai` | OpenAI GPT | [OpenAI Platform](https://platform.openai.com/api-keys) |
 | `anthropic` | Anthropic Claude | [Anthropic Console](https://console.anthropic.com/) |
 | `ollama` | 本地模型 | 无需 API Key，需本地运行 Ollama |
+| `zhipu` | 智谱 AI | [智谱 AI 开放平台](https://open.bigmodel.cn/) |
 
 #### 安装额外 LLM 支持
 
@@ -88,6 +89,9 @@ uv sync --extra anthropic
 
 # 安装 Ollama 支持
 uv sync --extra ollama
+
+# 安装智谱 AI 支持
+uv sync --extra zhipu
 
 # 安装所有 LLM 支持
 uv sync --extra all
@@ -145,6 +149,8 @@ PROMPT_FOR_CODE_GENERATION = ...     # 自定义提示词
 | OpenAI | `gpt-4o` | 综合能力强 |
 | Anthropic | `claude-3-5-sonnet-20241022` | 代码质量高 |
 | Ollama | `llama3.2-vision` | 本地运行、隐私安全 |
+| 智谱 AI | `glm-4.7` | 编程专用模型，代码生成能力强 |
+| 智谱 AI | `glm-4.6` | 编程模型 |
 
 ### [Security] 安全配置
 
@@ -225,7 +231,8 @@ autoleetcode/
 │   ├── gemini_client.py    # Gemini 客户端
 │   ├── openai_client.py    # OpenAI 客户端
 │   ├── anthropic_client.py # Anthropic 客户端
-│   └── ollama_client.py    # Ollama 客户端
+│   ├── ollama_client.py    # Ollama 客户端
+│   └── zhipu_client.py     # 智谱 AI 客户端
 ├── notification/
 │   └── notifier.py         # 通知系统
 ├── security/

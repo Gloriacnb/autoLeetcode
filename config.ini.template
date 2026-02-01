@@ -11,11 +11,12 @@ OUTPUT_CODE_DIRECTORY = /path/to/output
 # TEMP_SCREENSHOT_DIRECTORY = /path/to/temp
 
 [LLM]
-# LLM 提供商: gemini, openai, anthropic, ollama
+# LLM 提供商: gemini, openai, anthropic, ollama, zhipu
 PROVIDER = gemini
 
 # API 密钥（也可通过环境变量 LLM_API_KEY 设置）
 # Gemini 获取地址: https://aistudio.google.com/app/apikey
+# 智谱 AI 获取地址: https://open.bigmodel.cn/
 API_KEY = Your_API_Key_Here
 
 # 模型名称
@@ -23,6 +24,7 @@ API_KEY = Your_API_Key_Here
 # OpenAI: gpt-4o, gpt-4-vision-preview
 # Anthropic: claude-3-5-sonnet-20241022
 # Ollama: llama3.2-vision, etc.
+# 智谱 AI: glm-4.7 (推荐), glm-4.6
 MODEL_NAME = gemini-2.5-flash
 
 # 可选：自定义 API 端点（用于 Ollama 或代理）

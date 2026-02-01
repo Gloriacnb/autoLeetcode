@@ -7,6 +7,7 @@ from autoleetcode.llm.gemini_client import GeminiClient
 from autoleetcode.llm.openai_client import OpenAIClient
 from autoleetcode.llm.anthropic_client import AnthropicClient
 from autoleetcode.llm.ollama_client import OllamaClient
+from autoleetcode.llm.zhipu_client import ZhipuClient
 from autoleetcode.api.exceptions import ConfigurationError
 
 
@@ -18,6 +19,7 @@ class LLMClientFactory:
         "openai": OpenAIClient,
         "anthropic": AnthropicClient,
         "ollama": OllamaClient,
+        "zhipu": ZhipuClient,
     }
 
     @classmethod
@@ -28,7 +30,7 @@ class LLMClientFactory:
         创建 LLM 客户端实例
 
         Args:
-            provider: 提供商名称 ('gemini', 'openai', 'anthropic', 'ollama')
+            provider: 提供商名称 ('gemini', 'openai', 'anthropic', 'ollama', 'zhipu')
             api_key: API 密钥
             model_name: 模型名称
             base_url: 可选的自定义 API 端点

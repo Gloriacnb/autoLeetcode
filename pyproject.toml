@@ -33,8 +33,11 @@ anthropic = ["anthropic>=0.18.0"]
 # Ollama 支持（本地模型）
 ollama = ["ollama>=0.1.0"]
 
+# 智谱 AI 支持
+zhipu = ["openai>=1.0.0"]
+
 # 安装所有 LLM 提供商
-all = ["autoleetcode[openai,anthropic,ollama]"]
+all = ["autoleetcode[openai,anthropic,ollama,zhipu]"]
 
 # 开发依赖
 dev = [
