@@ -1,0 +1,58 @@
+[Paths]
+# 截图保存的源目录
+# 请确保您的截图工具将截图像保存到此目录
+SOURCE_SCREENSHOT_DIRECTORY = /path/to/screenshots
+
+# 生成的Python代码将保存到此目录
+# 如果目录不存在，脚本将尝试创建它
+OUTPUT_CODE_DIRECTORY = /path/to/output
+
+# 可选：临时截图目录
+# TEMP_SCREENSHOT_DIRECTORY = /path/to/temp
+
+[LLM]
+# LLM 提供商: gemini, openai, anthropic, ollama
+PROVIDER = gemini
+
+# API 密钥（也可通过环境变量 LLM_API_KEY 设置）
+# Gemini 获取地址: https://aistudio.google.com/app/apikey
+API_KEY = Your_API_Key_Here
+
+# 模型名称
+# Gemini: gemini-2.5-flash, gemini-2.0-pro-exp
+# OpenAI: gpt-4o, gpt-4-vision-preview
+# Anthropic: claude-3-5-sonnet-20241022
+# Ollama: llama3.2-vision, etc.
+MODEL_NAME = gemini-2.5-flash
+
+# 可选：自定义 API 端点（用于 Ollama 或代理）
+# BASE_URL = http://localhost:11434/v1
+
+# 给 LLM 的提示语
+PROMPT_FOR_CODE_GENERATION = 请根据这张算法编程题目截图，生成一个Python语言的解答代码。代码应该完整、可运行，并包含必要的注释。请先输出题目名称，格式为 "题目名称: [题目名称]"，然后直接输出代码，不要包含多余的文字说明。
+
+[Security]
+# 代码执行超时时间（秒）
+CODE_TIMEOUT = 10
+
+# 最大内存限制（MB）
+MAX_MEMORY_MB = 100
+
+# 启用 AST 代码验证
+ENABLE_AST_VALIDATION = true
+
+# 允许的截图文件扩展名
+ALLOWED_EXTENSIONS = .png, .jpg, .jpeg
+
+# 最大截图文件大小（MB）
+MAX_FILE_SIZE_MB = 10
+
+[Logging]
+# 日志级别: DEBUG, INFO, WARNING, ERROR
+LOG_LEVEL = INFO
+
+# 可选：日志文件路径
+# LOG_FILE = autoleetcode.log
+
+# 控制台输出
+CONSOLE_OUTPUT = true

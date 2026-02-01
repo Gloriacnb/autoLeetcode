@@ -1,0 +1,58 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "autoleetcode"
+version = "0.2.0"
+description = "Automates solving LeetCode problems from screenshots using multiple LLM providers."
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+authors = [
+  { name="Peter", email="peter.shqp@gmail.com" },
+]
+dependencies = [
+    # 核心依赖
+    "pillow",
+    "pillow-heif",  # 支持 macOS HEIF 截图格式
+    "pyperclip",
+    "watchdog",
+
+    # LLM 提供商（默认 Gemini）
+    "google-generativeai",
+]
+
+[project.optional-dependencies]
+# OpenAI 支持
+openai = ["openai>=1.0.0"]
+
+# Anthropic Claude 支持
+anthropic = ["anthropic>=0.18.0"]
+
+# Ollama 支持（本地模型）
+ollama = ["ollama>=0.1.0"]
+
+# 安装所有 LLM 提供商
+all = ["autoleetcode[openai,anthropic,ollama]"]
+
+# 开发依赖
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "mypy>=1.0.0",
+]
+
+[project.scripts]
+autoleetcode = "autoleetcode.main:main"
+
+[tool.hatch.build]
+include = [
+    "autoleetcode/**/*.py",
+    "config.ini.template",
+]
+
+[tool.hatch.build.targets.wheel]
+include = ["autoleetcode/**", "config.ini.template"]
+exclude = ["config.ini", "**/__pycache__", "**/*.pyc"]
