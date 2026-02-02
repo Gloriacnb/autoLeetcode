@@ -230,8 +230,8 @@ class ScreenshotMonitor(FileSystemEventHandler):
         return observer
 
 
-def main():
-    """应用入口点"""
+def run_monitor():
+    """运行截图监控模式"""
     try:
         # 加载配置
         config = AppConfig.load()
@@ -289,6 +289,18 @@ def main():
     except Exception as e:
         logger.exception(f"意外错误: {e}")
         sys.exit(1)
+
+
+def main():
+    """应用入口点"""
+    # 检查是否有命令行参数
+    if len(sys.argv) > 1:
+        # 有参数，使用 CLI 模式
+        from autoleetcode.cli.commands import main as cli_main
+        cli_main()
+    else:
+        # 无参数，使用监控模式（默认行为）
+        run_monitor()
 
 
 if __name__ == "__main__":

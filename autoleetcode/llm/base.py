@@ -47,3 +47,21 @@ class BaseLLMClient(ABC):
             修正后的代码
         """
         pass
+
+    @abstractmethod
+    def verify_connection(self) -> dict:
+        """
+        验证 API 连接和配置
+
+        Returns:
+            dict: {
+                'success': bool,           # 验证是否成功
+                'message': str,            # 用户友好的消息
+                'provider': str,           # 提供商名称
+                'model': str,              # 模型名称
+                'latency_ms': float,       # 请求延迟（毫秒）
+                'details': dict | None,    # 额外细节
+                'error': Exception | None  # 错误对象
+            }
+        """
+        pass

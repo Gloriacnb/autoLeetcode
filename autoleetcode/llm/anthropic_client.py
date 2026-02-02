@@ -1,9 +1,13 @@
 """Anthropic Claude API 客户端实现"""
 
 from typing import Optional
+import time
+import logging
 
 from autoleetcode.llm.base import BaseLLMClient
 from autoleetcode.api.exceptions import APIError
+
+logger = logging.getLogger(__name__)
 
 try:
     from anthropic import Anthropic
@@ -110,3 +114,105 @@ class AnthropicClient(BaseLLMClient):
                 return broken_code
         except Exception:
             return broken_code
+
+    def verify_connection(self) -> dict:
+        """
+        验证 Anthropic API 连接和配置
+
+        Returns:
+            dict: 验证结果字典
+        """
+        provider = "ANTHROPIC"
+        model = self.model_name
+        start_time = time.time()
+
+        try:
+            # 发送一个最小的测试请求
+            response = self.client.messages.create(
+                model=self.model_name,
+                max_tokens=10,
+                messages=[{"role": "user", "content": "Hi"}],
+            )
+
+            latency_ms = (time.time() - start_time) * 1000
+
+            if response and response.content:
+                return {
+                    'success': True,
+                    'message': '连接成功',
+                    'provider': provider,
+                    'model': model,
+                    'latency_ms': latency_ms,
+                    'details': {
+                        'response_preview': response.content[0].text[:50]
+                    },
+                    'error': None
+                }
+            else:
+                return {
+                    'success': False,
+                    'message': 'API 返回空响应',
+                    'provider': provider,
+                    'model': model,
+                    'latency_ms': latency_ms,
+                    'details': None,
+                    'error': Exception('Empty response')
+                }
+
+        except Exception as e:
+            error_str = str(e)
+            latency_ms = (time.time() - start_time) * 1000
+
+            # 解析错误类型
+            if 'authentication' in error_str.lower() or '401' in error_str:
+                return {
+                    'success': False,
+                    'message': 'API Key 无效或已过期',
+                    'provider': provider,
+                    'model': model,
+                    'latency_ms': latency_ms,
+                    'details': {
+                        'error_type': 'AuthenticationError',
+                        'suggestion': '请访问 https://console.anthropic.com/settings/keys 获取 API Key'
+                    },
+                    'error': e
+                }
+
+            elif 'not found' in error_str.lower() or '404' in error_str:
+                return {
+                    'success': False,
+                    'message': f'模型 {model} 不存在',
+                    'provider': provider,
+                    'model': model,
+                    'latency_ms': latency_ms,
+                    'details': {
+                        'error_type': 'NotFoundError',
+                        'suggestion': '请检查模型名称是否正确'
+                    },
+                    'error': e
+                }
+
+            elif 'rate' in error_str.lower() or '429' in error_str:
+                return {
+                    'success': False,
+                    'message': '请求速率受限',
+                    'provider': provider,
+                    'model': model,
+                    'latency_ms': latency_ms,
+                    'details': {
+                        'error_type': 'RateLimitError',
+                        'suggestion': '请稍后重试或检查账户配额'
+                    },
+                    'error': e
+                }
+
+            else:
+                return {
+                    'success': False,
+                    'message': f'连接失败: {error_str}',
+                    'provider': provider,
+                    'model': model,
+                    'latency_ms': latency_ms,
+                    'details': None,
+                    'error': e
+                }

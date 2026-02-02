@@ -2,9 +2,13 @@
 
 import base64
 from typing import Optional
+import time
+import logging
 
 from autoleetcode.llm.base import BaseLLMClient
 from autoleetcode.api.exceptions import APIError
+
+logger = logging.getLogger(__name__)
 
 try:
     from ollama import Client
@@ -93,3 +97,127 @@ class OllamaClient(BaseLLMClient):
                 return broken_code
         except Exception:
             return broken_code
+
+    def verify_connection(self) -> dict:
+        """
+        验证 Ollama API 连接和配置
+
+        Returns:
+            dict: 验证结果字典
+        """
+        provider = "OLLAMA"
+        model = self.model_name
+        start_time = time.time()
+
+        try:
+            # 首先检查本地服务是否运行
+            import requests
+            try:
+                # 尝试连接 Ollama 服务
+                response = requests.get(f"{self.base_url}/api/tags", timeout=5)
+                response.raise_for_status()
+            except requests.exceptions.ConnectionError:
+                return {
+                    'success': False,
+                    'message': '无法连接到 Ollama 服务',
+                    'provider': provider,
+                    'model': model,
+                    'latency_ms': (time.time() - start_time) * 1000,
+                    'details': {
+                        'error_type': 'ConnectionError',
+                        'suggestion': '请确保 Ollama 服务正在运行: ollama serve'
+                    },
+                    'error': Exception('Ollama service not running')
+                }
+            except requests.exceptions.Timeout:
+                return {
+                    'success': False,
+                    'message': '连接 Ollama 服务超时',
+                    'provider': provider,
+                    'model': model,
+                    'latency_ms': (time.time() - start_time) * 1000,
+                    'details': {
+                        'error_type': 'Timeout',
+                        'suggestion': '请检查 Ollama 服务是否正常运行'
+                    },
+                    'error': Exception('Connection timeout')
+                }
+
+            # 检查模型是否已安装
+            models_data = response.json()
+            installed_models = [m['name'] for m in models_data.get('models', [])]
+
+            # Ollama 模型名称可能包含 tag (e.g., "llama2:latest")
+            model_name_without_tag = model.split(':')[0]
+            is_installed = any(m.split(':')[0] == model_name_without_tag or m == model for m in installed_models)
+
+            if not is_installed:
+                return {
+                    'success': False,
+                    'message': f'模型 {model} 未安装',
+                    'provider': provider,
+                    'model': model,
+                    'latency_ms': (time.time() - start_time) * 1000,
+                    'details': {
+                        'error_type': 'ModelNotFound',
+                        'installed_models': installed_models,
+                        'suggestion': f'请运行: ollama pull {model}'
+                    },
+                    'error': Exception(f'Model {model} not found')
+                }
+
+            # 发送一个简单的测试请求
+            test_response = self.client.generate(
+                model=self.model_name,
+                prompt="Hi",
+            )
+
+            latency_ms = (time.time() - start_time) * 1000
+
+            if test_response and test_response.get("response"):
+                return {
+                    'success': True,
+                    'message': '连接成功',
+                    'provider': provider,
+                    'model': model,
+                    'latency_ms': latency_ms,
+                    'details': {
+                        'response_preview': test_response.get("response", "")[:100],
+                        'installed_models': installed_models
+                    },
+                    'error': None
+                }
+            else:
+                return {
+                    'success': False,
+                    'message': 'API 返回空响应',
+                    'provider': provider,
+                    'model': model,
+                    'latency_ms': latency_ms,
+                    'details': None,
+                    'error': Exception('Empty response')
+                }
+
+        except ImportError:
+            return {
+                'success': False,
+                'message': 'requests 库未安装',
+                'provider': provider,
+                'model': model,
+                'latency_ms': (time.time() - start_time) * 1000,
+                'details': {
+                    'suggestion': '请安装 requests 库: pip install requests'
+                },
+                'error': Exception('requests not installed')
+            }
+
+        except Exception as e:
+            return {
+                'success': False,
+                'message': f'连接失败: {str(e)}',
+                'provider': provider,
+                'model': model,
+                'latency_ms': (time.time() - start_time) * 1000,
+                'details': None,
+                'error': e
+            }

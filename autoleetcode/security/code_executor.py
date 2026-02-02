@@ -4,8 +4,12 @@ import ast
 import subprocess
 import signal
 import os
-from resource import getrlimit, setrlimit, RLIMIT_NOFILE
+import sys
 from typing import Tuple
+
+# Windows 兼容性：resource 模块仅在 Unix 系统上可用
+if sys.platform != "win32":
+    from resource import getrlimit, setrlimit, RLIMIT_NOFILE
 
 from autoleetcode.api.exceptions import CodeValidationError, CodeExecutionError
 
@@ -123,11 +127,14 @@ class CodeExecutor:
         except Exception as e:
             return False, f"代码验证错误: {e}"
 
-        # 设置资源限制
-        def limit_resources():
-            # 限制文件描述符数量
-            soft, hard = getrlimit(RLIMIT_NOFILE)
-            setrlimit(RLIMIT_NOFILE, (16, hard))
+        # 设置资源限制（仅 Unix 系统）
+        preexec_fn = None
+        if sys.platform != "win32":
+            def limit_resources():
+                # 限制文件描述符数量
+                soft, hard = getrlimit(RLIMIT_NOFILE)
+                setrlimit(RLIMIT_NOFILE, (16, hard))
+            preexec_fn = limit_resources  # 在子进程中应用限制
 
         # 执行代码
         try:
@@ -137,7 +144,7 @@ class CodeExecutor:
                 text=True,
                 encoding="utf-8",
                 timeout=self.timeout,
-                preexec_fn=limit_resources,  # 在子进程中应用限制
+                preexec_fn=preexec_fn,  # Unix 系统上应用资源限制
                 check=False,
             )
 
