@@ -39,6 +39,7 @@ class ImagePreprocessor:
         adaptive_threshold: bool = False,
         target_dpi: int = 300,
         contrast_factor: float = 1.5,
+        max_size: int = 4000,  # PaddleOCR 推荐的最大尺寸
     ) -> Optional[str]:
         """
         增强图片以提高 OCR 准确率
@@ -72,6 +73,19 @@ class ImagePreprocessor:
             # 转换为 RGB 模式（如果是 RGBA 或其他模式）
             if img.mode != 'RGB':
                 img = img.convert('RGB')
+
+            # 0. 首先检查并调整图片大小（在所有其他处理之前）
+            # PaddleOCR 推荐最大尺寸为 4000
+            if max(img.width, img.height) > max_size:
+                # 计算缩放比例，保持宽高比
+                if img.width > img.height:
+                    new_width = max_size
+                    new_height = int(img.height * (max_size / img.width))
+                else:
+                    new_height = max_size
+                    new_width = int(img.width * (max_size / img.height))
+                img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                logger.debug(f"图片大小已调整为: {new_width}x{new_height}")
 
             # 1. 调整分辨率
             if adjust_dpi:

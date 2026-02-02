@@ -37,7 +37,13 @@ ollama = ["ollama>=0.1.0"]
 zhipu = ["openai>=1.0.0"]
 
 # PaddleOCR 支持（用于文本提取）
-paddleocr = ["paddleocr>=2.7.0", "opencv-python>=4.8.0"]
+# 注意：PaddleOCR 需要 PaddlePaddle 框架
+paddleocr = [
+    "paddleocr>=2.7.0",
+    "paddlepaddle>=2.6.0",  # PaddleOCR 的依赖框架
+    "opencv-python>=4.8.0",
+    "numpy>=1.24.0",
+]
 
 # 图片预处理增强（OpenCV 和 NumPy）
 opencv = ["opencv-python>=4.8.0", "numpy>=1.24.0"]

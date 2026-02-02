@@ -1,7 +1,6 @@
 """OCR 抽象基类"""
 
 from abc import ABC, abstractmethod
-from typing import list
 
 
 class BaseOCRProcessor(ABC):
