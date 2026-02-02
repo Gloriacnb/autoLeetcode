@@ -1,11 +1,12 @@
 # AutoLeetcode
 
-自动从截图分析并生成 LeetCode 题解的 Python 工具，支持多种大语言模型（LLM）提供商。
+自动从截图分析并生成 LeetCode 题解的 Python 工具，支持多种大语言模型（LLM）提供商和 OCR 文本提取。
 
 ## 功能特点
 
 - **自动监控**: 监控指定目录，自动识别新添加的截图
-- **多 LLM 支持**: 支持 Gemini、OpenAI、Anthropic Claude、Ollama 等多种模型
+- **多 LLM 支持**: 支持 Gemini、OpenAI、Anthropic Claude、Ollama、智谱 AI 等多种模型
+- **OCR 文本提取**: 支持本地 OCR 提取图片文本，让不支持图片的模型也能处理截图
 - **智能代码生成**: 从题目截图自动生成 Python 解答代码
 - **自动测试与修正**: 自动测试生成的代码，失败时智能修正（最多 3 次）
 - **安全执行**: 沙箱化代码执行，支持超时和内存限制
@@ -36,7 +37,11 @@ cd autoleetcode
 ### 3. 安装依赖
 
 ```bash
+# 基础安装
 uv sync
+
+# 如果需要使用 OCR 功能
+uv sync --extra ocr
 ```
 
 ### 4. 配置
@@ -58,17 +63,58 @@ SOURCE_SCREENSHOT_DIRECTORY = /path/to/screenshots
 OUTPUT_CODE_DIRECTORY = /path/to/output
 
 [LLM]
-# LLM 提供商: gemini, openai, anthropic, ollama
+# LLM 提供商: gemini, openai, anthropic, ollama, zhipu
 PROVIDER = gemini
 
-# API 密钥（也可通过环境变量 LLM_API_KEY 设置）
-API_KEY = Your_API_Key_Here
+# API 密钥（推荐使用环境变量设置）
+# API_KEY = Your_API_Key_Here
 
 # 模型名称
 MODEL_NAME = gemini-2.5-flash
 ```
 
-#### 支持的 LLM 提供商
+### 5. 验证配置
+
+使用验证命令确保 API 配置正确：
+
+```bash
+uv run autoleetcode verify
+```
+
+带详细信息的验证：
+
+```bash
+uv run autoleetcode verify -v
+```
+
+指定提供商和 API Key 进行验证：
+
+```bash
+uv run autoleetcode verify --provider gemini --api-key YOUR_API_KEY
+```
+
+## 使用方法
+
+### 基本使用
+
+```bash
+# 使用 uv 运行
+uv run autoleetcode
+```
+
+程序将开始监控配置的目录，当检测到新的截图时自动处理。
+
+### 工作流程
+
+1. 截取 LeetCode 题目截图并保存到监控目录
+2. 程序自动检测新截图
+3. 根据配置，直接使用图片或通过 OCR 提取文本
+4. LLM 分析并生成 Python 解答代码
+5. 自动运行生成的代码
+6. 如果运行失败，将错误信息发送给 LLM 进行修正（最多 3 次）
+7. 测试通过后，代码自动复制到剪贴板并播放提示音
+
+## 支持的 LLM 提供商
 
 | 提供商 | 说明 | 获取 API Key |
 |--------|------|--------------|
@@ -78,7 +124,7 @@ MODEL_NAME = gemini-2.5-flash
 | `ollama` | 本地模型 | 无需 API Key，需本地运行 Ollama |
 | `zhipu` | 智谱 AI | [智谱 AI 开放平台](https://open.bigmodel.cn/) |
 
-#### 安装额外 LLM 支持
+### 安装额外 LLM 支持
 
 ```bash
 # 安装 OpenAI 支持
@@ -97,30 +143,89 @@ uv sync --extra zhipu
 uv sync --extra all
 ```
 
-## 使用方法
+### 推荐模型
 
-### 基本使用
+| 提供商 | 推荐模型 | 特点 |
+|--------|----------|------|
+| Gemini | `gemini-2.5-flash` | 快速、免费额度高 |
+| Gemini | `gemini-2.0-pro-exp` | 能力更强 |
+| OpenAI | `gpt-4o` | 综合能力强 |
+| Anthropic | `claude-3-5-sonnet-20241022` | 代码质量高 |
+| Ollama | `llama3.2-vision` | 本地运行、隐私安全 |
+| 智谱 AI | `glm-4.7` | 编程专用模型，代码生成能力强 |
+
+## OCR 文本提取
+
+当使用不支持图片的 LLM 模型时，可以启用 OCR 功能从截图中提取文本。
+
+### 安装 OCR 依赖
 
 ```bash
-# 方式一：使用 uv 运行
-uv run autoleetcode
+# 安装 PaddleOCR（推荐）
+uv sync --extra paddleocr
 
-# 方式二：直接使用命令（如果已安装）
-autoleetcode
+# 或安装所有 OCR 功能
+uv sync --extra ocr
 ```
 
-程序将开始监控配置的目录，当检测到新的截图时自动处理。
+### OCR 配置
 
-### 工作流程
+在 `config.ini` 中配置 OCR：
 
-1. 截取 LeetCode 题目截图并保存到监控目录
-2. 程序自动检测新截图
-3. LLM 分析截图并生成 Python 解答代码
-4. 自动运行生成的代码
-5. 如果运行失败，将错误信息发送给 LLM 进行修正（最多 3 次）
-6. 测试通过后，代码自动复制到剪贴板并播放提示音
+```ini
+[OCR]
+# 是否启用 OCR 文本提取
+ENABLE_OCR = true
+
+# OCR 引擎: paddleocr
+OCR_ENGINE = paddleocr
+
+# 语言: ch=中英文, en=英文
+LANGUAGE = ch
+
+# 是否使用 GPU 加速
+USE_GPU = false
+
+# 是否启用图片预处理（提升 OCR 准确率）
+ENABLE_PREPROCESSING = true
+
+# 工作模式
+# auto: 自动检测模型是否支持图片，不支持时使用 OCR
+# text: 强制使用纯文本模式（只发送 OCR 提取的文本）
+# hybrid: 混合模式（同时发送 OCR 文本和图片）
+MODE = auto
+
+# 目标 DPI（用于图片预处理）
+TARGET_DPI = 300
+```
+
+### OCR 工作模式说明
+
+| 模式 | 适用场景 | 发送内容 | 优点 | 缺点 |
+|------|---------|---------|------|------|
+| **auto** | 通用 | 模型支持图片时发送图片，否则发送 OCR 文本 | 自动适应，无需手动配置 | 可能不是最优选择 |
+| **text** | 不支持图片的模型 | 只发送 OCR 提取的 Markdown 文本 | 减少 token 消耗 | 可能丢失视觉信息 |
+| **hybrid** | 支持图片但理解能力弱 | 同时发送 OCR 文本和图片 | 信息最完整，准确率最高 | Token 消耗大 |
 
 ## 配置详解
+
+### 环境变量设置 API Key
+
+推荐使用环境变量设置 API Key，避免将敏感信息写入配置文件：
+
+```bash
+# Linux/macOS
+export LLM_API_KEY="your_api_key_here"
+# 或针对特定提供商
+export GEMINI_API_KEY="your_gemini_key"
+export OPENAI_API_KEY="your_openai_key"
+
+# Windows (CMD)
+set LLM_API_KEY=your_api_key_here
+
+# Windows (PowerShell)
+$env:LLM_API_KEY="your_api_key_here"
+```
 
 ### [Paths] 路径配置
 
@@ -134,23 +239,11 @@ TEMP_SCREENSHOT_DIRECTORY = /path/to/temp           # 可选：临时目录
 
 ```ini
 PROVIDER = gemini                    # LLM 提供商
-API_KEY = your_api_key               # API 密钥
+API_KEY = your_api_key               # API 密钥（推荐使用环境变量）
 MODEL_NAME = gemini-2.5-flash        # 模型名称
 BASE_URL = http://localhost:11434/v1 # 可选：自定义端点（Ollama/代理）
 PROMPT_FOR_CODE_GENERATION = ...     # 自定义提示词
 ```
-
-#### 推荐模型
-
-| 提供商 | 推荐模型 | 特点 |
-|--------|----------|------|
-| Gemini | `gemini-2.5-flash` | 快速、免费额度高 |
-| Gemini | `gemini-2.0-pro-exp` | 能力更强 |
-| OpenAI | `gpt-4o` | 综合能力强 |
-| Anthropic | `claude-3-5-sonnet-20241022` | 代码质量高 |
-| Ollama | `llama3.2-vision` | 本地运行、隐私安全 |
-| 智谱 AI | `glm-4.7` | 编程专用模型，代码生成能力强 |
-| 智谱 AI | `glm-4.6` | 编程模型 |
 
 ### [Security] 安全配置
 
@@ -171,14 +264,6 @@ CONSOLE_OUTPUT = true           # 控制台输出
 ```
 
 ## 高级用法
-
-### 环境变量设置 API Key
-
-```bash
-export LLM_API_KEY="your_api_key_here"
-```
-
-在 `config.ini` 中可以省略 `API_KEY` 配置。
 
 ### 使用 Ollama 本地模型
 
@@ -219,6 +304,9 @@ autoleetcode/
 ├── main.py                 # 主入口
 ├── api/
 │   └── exceptions.py       # 异常定义
+├── cli/                    # CLI 命令
+│   ├── commands.py         # 命令路由
+│   └── verifier.py         # API 验证工具
 ├── code/
 │   └── parser.py           # 代码解析
 ├── config/
@@ -235,6 +323,12 @@ autoleetcode/
 │   └── zhipu_client.py     # 智谱 AI 客户端
 ├── notification/
 │   └── notifier.py         # 通知系统
+├── ocr/                    # OCR 模块
+│   ├── base.py             # OCR 基类
+│   ├── factory.py          # OCR 工厂
+│   ├── paddle_processor.py # PaddleOCR 实现
+│   ├── preprocessor.py     # 图片预处理
+│   └── formatter.py        # 文本格式化
 ├── security/
 │   └── code_executor.py    # 代码执行器
 └── utils/
@@ -243,13 +337,37 @@ autoleetcode/
 
 ## 常见问题
 
+### Q: API 验证失败怎么办？
+
+A: 首先使用 `verify` 命令检查配置：
+```bash
+uv run autoleetcode verify -v
+```
+
+检查：
+1. API Key 是否正确（不要有多余的空格或引号）
+2. 网络连接是否正常
+3. 是否有防火墙或代理限制
+4. 使用环境变量而不是配置文件设置 API Key
+
+### Q: VSCode 集成终端中 API 验证失败？
+
+A: VSCode 的集成终端可能缓存了旧的环境变量。请尝试：
+1. 重启 VSCode
+2. 或使用独立的终端窗口（cmd/PowerShell）
+3. 确保环境变量在用户级别设置，而不是仅在 VSCode 中
+
 ### Q: 代码执行超时怎么办？
 
 A: 在 `config.ini` 的 `[Security]` 部分增加 `CODE_TIMEOUT` 值。
 
-### Q: 如何禁用代码自动测试？
+### Q: OCR 识别不准确怎么办？
 
-A: 目前不支持禁用，但可以将 `MAX_FIX_ATTEMPTS` 设置为 0 来减少测试次数（需修改代码）。
+A: 尝试以下方法：
+1. 启用图片预处理：`ENABLE_PREPROCESSING = true`
+2. 调整目标 DPI：`TARGET_DPI = 300`
+3. 使用混合模式：`MODE = hybrid`
+4. 确保截图清晰，文字大小适中
 
 ### Q: 支持哪些图片格式？
 
@@ -262,7 +380,3 @@ A: 访问 [Google AI Studio](https://aistudio.google.com/app/apikey) 免费获�
 ## 许可证
 
 MIT License
-
-## 贡献
-
-欢迎提交 Issue 和 Pull Request！

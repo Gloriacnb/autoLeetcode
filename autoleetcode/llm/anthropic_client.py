@@ -19,6 +19,8 @@ except ImportError:
 class AnthropicClient(BaseLLMClient):
     """Anthropic Claude API 客户端"""
 
+    supports_vision = True
+
     def __init__(self, api_key: str, model_name: str, base_url: Optional[str] = None):
         if not ANTHROPIC_AVAILABLE:
             raise ImportError("Anthropic 库未安装，请运行: uv sync --extra anthropic")
@@ -66,6 +68,37 @@ class AnthropicClient(BaseLLMClient):
                         ],
                     }
                 ],
+            )
+
+            if not response or not response.content:
+                raise APIError("Anthropic API 返回空响应")
+
+            return response.content[0].text
+
+        except Exception as e:
+            raise APIError(f"Anthropic API 调用失败: {e}")
+
+    def generate_code_from_text(self, text: str, prompt: str) -> str:
+        """
+        从文本生成代码
+
+        Args:
+            text: 题目文本（Markdown 格式）
+            prompt: 提示词
+
+        Returns:
+            API 响应的原始文本
+
+        Raises:
+            APIError: API 调用失败
+        """
+        try:
+            full_prompt = f"{prompt}\n\n【题目内容】\n{text}"
+
+            response = self.client.messages.create(
+                model=self.model_name,
+                max_tokens=4096,
+                messages=[{"role": "user", "content": full_prompt}],
             )
 
             if not response or not response.content:

@@ -109,6 +109,48 @@ class LoggingConfig:
 
 
 @dataclass
+class OCRConfig:
+    """OCR 配置"""
+
+    # 是否启用 OCR
+    enable_ocr: bool = False
+
+    # OCR 引擎选择
+    ocr_engine: str = "paddleocr"  # paddleocr, easyocr, tesseract
+
+    # 语言设置
+    language: str = "ch"  # ch=中英文, en=英文
+
+    # 是否使用 GPU 加速
+    use_gpu: bool = False
+
+    # 是否启用图片预处理
+    enable_preprocessing: bool = True
+
+    # 预处理选项
+    preprocessing_options: List[str] = field(
+        default_factory=lambda: ["enhance_contrast", "remove_noise", "adjust_dpi"]
+    )
+
+    # 目标 DPI
+    target_dpi: int = 300
+
+    # 工作模式
+    mode: str = "auto"  # auto=自动检测, text=纯文本, hybrid=混合模式
+
+    def validate(self) -> List[str]:
+        """验证 OCR 配置"""
+        errors = []
+        if self.enable_ocr and self.ocr_engine not in ["paddleocr", "easyocr", "tesseract"]:
+            errors.append("不支持的 OCR 引擎")
+        if self.mode not in ["auto", "text", "hybrid"]:
+            errors.append("mode 必须是 auto, text 或 hybrid")
+        if self.target_dpi <= 0:
+            errors.append("target_dpi 必须大于 0")
+        return errors
+
+
+@dataclass
 class AppConfig:
     """完整应用配置"""
 
@@ -116,6 +158,7 @@ class AppConfig:
     llm: LLMConfig
     security: SecurityConfig = field(default_factory=SecurityConfig)
     logging: LoggingConfig = field(default_factory=LoggingConfig)
+    ocr: OCRConfig = field(default_factory=OCRConfig)
 
     def validate(self) -> List[str]:
         """验证所有配置部分"""
@@ -124,6 +167,7 @@ class AppConfig:
         all_errors.extend(self.llm.validate())
         all_errors.extend(self.security.validate())
         all_errors.extend(self.logging.validate())
+        all_errors.extend(self.ocr.validate())
         return all_errors
 
     @classmethod
@@ -251,4 +295,15 @@ class AppConfig:
             console_output=config.getboolean("Logging", "CONSOLE_OUTPUT", fallback=True),
         )
 
-        return cls(paths=paths, llm=llm, security=security, logging=logging)
+        # 加载 OCR 配置
+        ocr = OCRConfig(
+            enable_ocr=os.getenv("OCR_ENABLE", config.getboolean("OCR", "ENABLE_OCR", fallback=False)),
+            ocr_engine=os.getenv("OCR_ENGINE", config.get("OCR", "OCR_ENGINE", fallback="paddleocr")),
+            language=os.getenv("OCR_LANGUAGE", config.get("OCR", "LANGUAGE", fallback="ch")),
+            use_gpu=os.getenv("OCR_USE_GPU", config.getboolean("OCR", "USE_GPU", fallback=False)),
+            enable_preprocessing=os.getenv("OCR_ENABLE_PREPROCESSING", config.getboolean("OCR", "ENABLE_PREPROCESSING", fallback=True)),
+            target_dpi=int(os.getenv("OCR_TARGET_DPI", config.get("OCR", "TARGET_DPI", fallback="300"))),
+            mode=os.getenv("OCR_MODE", config.get("OCR", "MODE", fallback="auto")),
+        )
+
+        return cls(paths=paths, llm=llm, security=security, logging=logging, ocr=ocr)

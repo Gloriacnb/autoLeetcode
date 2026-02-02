@@ -20,6 +20,8 @@ except ImportError:
 class OllamaClient(BaseLLMClient):
     """Ollama API 客户端（本地模型）"""
 
+    supports_vision = True
+
     def __init__(self, api_key: str, model_name: str, base_url: Optional[str] = None):
         if not OLLAMA_AVAILABLE:
             raise ImportError("Ollama 库未安装，请运行: uv sync --extra ollama")
@@ -50,6 +52,36 @@ class OllamaClient(BaseLLMClient):
                 model=self.model_name,
                 prompt=f"{prompt}\n[图片已附上]",
                 images=[image_data],
+            )
+
+            if not response or not response.get("response"):
+                raise APIError("Ollama API 返回空响应")
+
+            return response["response"]
+
+        except Exception as e:
+            raise APIError(f"Ollama API 调用失败: {e}")
+
+    def generate_code_from_text(self, text: str, prompt: str) -> str:
+        """
+        从文本生成代码
+
+        Args:
+            text: 题目文本（Markdown 格式）
+            prompt: 提示词
+
+        Returns:
+            API 响应的原始文本
+
+        Raises:
+            APIError: API 调用失败
+        """
+        try:
+            full_prompt = f"{prompt}\n\n【题目内容】\n{text}"
+
+            response = self.client.generate(
+                model=self.model_name,
+                prompt=full_prompt,
             )
 
             if not response or not response.get("response"):

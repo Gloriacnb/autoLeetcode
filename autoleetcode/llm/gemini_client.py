@@ -30,9 +30,20 @@ except ImportError:
 class GeminiClient(BaseLLMClient):
     """Gemini API 客户端"""
 
+    supports_vision = True
+
     def __init__(self, api_key: str, model_name: str, base_url: Optional[str] = None):
         super().__init__(api_key, model_name, base_url)
-        genai.configure(api_key=api_key)
+
+        # 清理 API key（去除可能的空格和换行符）
+        clean_api_key = api_key.strip()
+
+        # 记录 API key 的前8个字符用于调试（不记录完整 key）
+        key_preview = clean_api_key[:8] if len(clean_api_key) > 8 else clean_api_key
+        logger.info(f"配置 Gemini API (key 前8位: {key_preview}...)")
+
+        # 配置 API key
+        genai.configure(api_key=clean_api_key)
 
         # 配置超时选项（兼容不同版本的库）
         try:

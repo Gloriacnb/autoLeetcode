@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell:*)",
+      "WebSearch",
+      "Bash(python:*)",
+      "Bash(uv run python:*)",
+      "Bash(timeout:*)",
+      "Bash(uv run autoleetcode verify:*)",
+      "Bash(ls:*)"
+    ]
+  }
+}

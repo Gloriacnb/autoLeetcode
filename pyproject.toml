@@ -36,8 +36,20 @@ ollama = ["ollama>=0.1.0"]
 # 智谱 AI 支持
 zhipu = ["openai>=1.0.0"]
 
+# PaddleOCR 支持（用于文本提取）
+paddleocr = ["paddleocr>=2.7.0", "opencv-python>=4.8.0"]
+
+# 图片预处理增强（OpenCV 和 NumPy）
+opencv = ["opencv-python>=4.8.0", "numpy>=1.24.0"]
+
 # 安装所有 LLM 提供商
 all = ["autoleetcode[openai,anthropic,ollama,zhipu]"]
+
+# 安装所有 OCR 引擎
+ocr = ["autoleetcode[paddleocr,opencv]"]
+
+# 完整安装（包含所有功能）
+all-complete = ["autoleetcode[all,ocr]"]
 
 # 开发依赖
 dev = [

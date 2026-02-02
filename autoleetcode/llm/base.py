@@ -7,6 +7,9 @@ from typing import Optional
 class BaseLLMClient(ABC):
     """LLM 客户端抽象基类"""
 
+    # 标记是否支持图片
+    supports_vision: bool = True
+
     def __init__(self, api_key: str, model_name: str, base_url: Optional[str] = None):
         """
         初始化 LLM 客户端
@@ -33,6 +36,26 @@ class BaseLLMClient(ABC):
             API 响应的原始文本
         """
         pass
+
+    def generate_code_from_text(self, text: str, prompt: str) -> str:
+        """
+        从文本生成代码（用于不支持图片的模型）
+
+        Args:
+            text: 题目文本（Markdown 格式）
+            prompt: 提示词
+
+        Returns:
+            API 响应的原始文本
+
+        Raises:
+            NotImplementedError: 如果子类不支持纯文本模式
+        """
+        # 默认实现：抛出未实现异常
+        raise NotImplementedError(
+            f"{self.__class__.__name__} 不支持纯文本模式，"
+            f"请使用支持图片的模型或实现此方法"
+        )
 
     @abstractmethod
     def fix_code(self, broken_code: str, error_message: str) -> str:

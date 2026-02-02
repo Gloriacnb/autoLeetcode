@@ -38,6 +38,8 @@ except ImportError:
 class ZhipuClient(BaseLLMClient):
     """智谱 AI API 客户端"""
 
+    supports_vision = True
+
     # 智谱 AI 编程专用端点
     DEFAULT_BASE_URL = "https://open.bigmodel.cn/api/coding/paas/v4/"
 
@@ -91,6 +93,36 @@ class ZhipuClient(BaseLLMClient):
                         ],
                     }
                 ],
+            )
+
+            if not response or not response.choices:
+                raise APIError("智谱 AI API 返回空响应")
+
+            return response.choices[0].message.content
+
+        except Exception as e:
+            raise APIError(f"智谱 AI API 调用失败: {e}")
+
+    def generate_code_from_text(self, text: str, prompt: str) -> str:
+        """
+        从文本生成代码
+
+        Args:
+            text: 题目文本（Markdown 格式）
+            prompt: 提示词
+
+        Returns:
+            API 响应的原始文本
+
+        Raises:
+            APIError: API 调用失败
+        """
+        try:
+            full_prompt = f"{prompt}\n\n【题目内容】\n{text}"
+
+            response = self.client.chat.completions.create(
+                model=self.model_name,
+                messages=[{"role": "user", "content": full_prompt}],
             )
 
             if not response or not response.choices:

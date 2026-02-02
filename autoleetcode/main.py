@@ -92,6 +92,23 @@ class ScreenshotProcessor:
         )
         logger.info(f"已配置 {config.llm.provider} LLM 客户端 (模型: {config.llm.model_name})")
 
+        # 创建 OCR 处理器（如果启用）
+        self.ocr_processor = None
+        if config.ocr.enable_ocr:
+            try:
+                from autoleetcode.ocr.factory import OCRProcessorFactory
+
+                self.ocr_processor = OCRProcessorFactory.create(
+                    engine=config.ocr.ocr_engine,
+                    language=config.ocr.language,
+                    use_gpu=config.ocr.use_gpu,
+                    preprocess=config.ocr.enable_preprocessing,
+                    preprocessing_options=config.ocr.preprocessing_options,
+                )
+                logger.info(f"已启用 OCR (引擎: {config.ocr.ocr_engine}, 模式: {config.ocr.mode})")
+            except Exception as e:
+                logger.warning(f"OCR 初始化失败，将使用图片模式: {e}")
+
         # 创建代码执行器
         self.code_executor = CodeExecutor(
             timeout=config.security.code_timeout,
@@ -103,6 +120,60 @@ class ScreenshotProcessor:
 
         # 创建通知器
         self.notifier = Notifier()
+
+    def _should_use_ocr(self) -> bool:
+        """判断是否应该使用 OCR"""
+        if not self.ocr_processor:
+            return False
+
+        mode = self.config.ocr.mode
+
+        if mode == "text":
+            # 强制使用文本模式
+            return True
+        elif mode == "hybrid":
+            # 混合模式：总是使用 OCR + 图片
+            return True
+        else:  # auto
+            # 自动模式：模型不支持图片时使用 OCR
+            return not self.llm_client.supports_vision
+
+    def _extract_and_format_text(self, screenshot_path: str) -> str:
+        """提取并格式化文本"""
+        from autoleetcode.ocr.formatter import MarkdownFormatter
+
+        # 提取文本
+        logger.info("正在使用 OCR 提取题目文本...")
+        raw_text = self.ocr_processor.extract_text(screenshot_path)
+
+        if not raw_text:
+            raise AutoLeetcodeError("OCR 未能提取到任何文本")
+
+        # 格式化为 Markdown
+        markdown_text = MarkdownFormatter.format_LeetCode_problem(raw_text)
+
+        logger.info(f"已提取题目文本（{len(markdown_text)} 字符）")
+        return markdown_text
+
+    def _generate_response_with_ocr(self, markdown_text: str, screenshot_path: str) -> str:
+        """使用 OCR 文本生成响应"""
+        mode = self.config.ocr.mode
+
+        if mode == "hybrid" and self.llm_client.supports_vision:
+            # 混合模式：同时发送文本和图片
+            logger.info("使用混合模式（文本 + 图片）生成代码...")
+            response = self.llm_client.generate_code_from_screenshot(
+                screenshot_path,
+                f"{self.config.llm.prompt}\n\n【OCR 识别的题目文本】\n{markdown_text}"
+            )
+        else:
+            # 纯文本模式
+            logger.info("使用文本模式生成代码...")
+            response = self.llm_client.generate_code_from_text(
+                markdown_text, self.config.llm.prompt
+            )
+
+        return response
 
     def process_screenshot(self, screenshot_path: str) -> None:
         """
@@ -119,11 +190,17 @@ class ScreenshotProcessor:
                 self.config.security.max_file_size_mb,
             )
 
-            # 生成代码
-            logger.info("正在处理截图，请求 LLM 生成代码...")
-            response = self.llm_client.generate_code_from_screenshot(
-                screenshot_path, self.config.llm.prompt
-            )
+            # 生成代码 - 根据配置选择模式
+            if self._should_use_ocr():
+                # 使用 OCR 模式
+                markdown_text = self._extract_and_format_text(screenshot_path)
+                response = self._generate_response_with_ocr(markdown_text, screenshot_path)
+            else:
+                # 直接使用图片模式
+                logger.info("正在处理截图，请求 LLM 生成代码...")
+                response = self.llm_client.generate_code_from_screenshot(
+                    screenshot_path, self.config.llm.prompt
+                )
 
             # 解析响应
             title, generated_code = CodeParser.extract_code_from_markdown(response)
